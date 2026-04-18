@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wall of Words</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Custom title bar -->
+  <div class="titlebar">
+    <div class="titlebar-drag">
+      <span class="titlebar-logo">W</span>
+      <span class="titlebar-title">Wall of Words</span>
+    </div>
+    <div class="titlebar-controls">
+      <button class="tb-btn" id="btn-minimize" title="Minimize">&#8211;</button>
+      <button class="tb-btn tb-close" id="btn-close" title="Close">&#10005;</button>
+    </div>
+  </div>
+
+  <!-- Views -->
+  <div id="app">
+    <!-- Setup View -->
+    <div class="view" id="view-setup">
+      <div class="setup-hero">
+        <div class="hero-icon">📖</div>
+        <h1>Welcome to <span class="accent">Wall of Words</span></h1>
+        <p class="hero-sub">Grow your vocabulary while you work — words appear right on your desktop.</p>
+      </div>
+
+      <div class="setup-form">
+        <!-- Step 1: Wallpaper Source -->
+        <div class="setting-section">
+          <div class="setting-label">
+            <span class="setting-icon">🖼️</span>
+            <div>
+              <div class="setting-name">Wallpaper Source</div>
+              <div class="setting-desc">Choose where your wallpaper background comes from</div>
+            </div>
+          </div>
+          <div class="radio-group">
+            <label class="radio-card" id="rc-default">
+              <input type="radio" name="wallpaperSource" value="default" checked />
+              <div class="radio-content">
+                <div class="radio-title">🎨 Default Wallpapers</div>
+                <div class="radio-sub">Curated backgrounds included with the app</div>
+              </div>
+              <div class="radio-check">✓</div>
+            </label>
+            <label class="radio-card" id="rc-custom">
+              <input type="radio" name="wallpaperSource" value="custom" />
+              <div class="radio-content">
+                <div class="radio-title">📁 My Wallpapers</div>
+                <div class="radio-sub">Use your own image files</div>
+              </div>
+              <div class="radio-check">✓</div>
+            </label>
+          </div>
+
+          <div class="custom-wallpaper-row" id="custom-wp-row" style="display:none">
+            <button class="btn-secondary" id="btn-select-wallpapers">Browse Images…</button>
+            <span class="selected-count" id="selected-count"></span>
+          </div>
+        </div>
+
+        <!-- Step 2: Words Per Day -->
+        <div class="setting-section">
+          <div class="setting-label">
+            <span class="setting-icon">🔢</span>
+            <div>
+              <div class="setting-name">Words Per Day</div>
+              <div class="setting-desc">How many new words to show each day (spread across 3 updates)</div>
+            </div>
+          </div>
+          <div class="word-count-grid" id="word-count-grid">
+            <div class="wc-chip selected" data-value="1">1</div>
+            <div class="wc-chip" data-value="2">2</div>
+            <div class="wc-chip selected" data-value="3">3</div>
+            <div class="wc-chip" data-value="4">4</div>
+            <div class="wc-chip" data-value="5">5+</div>
+          </div>
+        </div>
+
+        <!-- Step 3: Text Position -->
+        <div class="setting-section">
+          <div class="setting-label">
+            <span class="setting-icon">📍</span>
+            <div>
+              <div class="setting-name">Word Card Position</div>
+              <div class="setting-desc">Click on the preview to set where the word card appears</div>
+            </div>
+          </div>
+          <div class="position-preview" id="position-preview">
+            <div class="pos-marker" id="pos-marker" style="left:50%;top:50%"></div>
+            <div class="pos-label">Click to reposition</div>
+          </div>
+          <div class="pos-readout" id="pos-readout">Position: 50%, 50%</div>
+        </div>
+
+        <button class="btn-primary btn-full" id="btn-complete-setup">
+          ✨ Start Learning
+        </button>
+      </div>
+    </div>
+
+    <!-- Settings View -->
+    <div class="view hidden" id="view-settings">
+      <div class="settings-layout">
+        <!-- Sidebar -->
+        <nav class="settings-nav">
+          <div class="nav-section-label">GENERAL</div>
+          <div class="nav-item active" data-panel="panel-wallpaper">🖼️ Wallpaper</div>
+          <div class="nav-item" data-panel="panel-words">📖 Words</div>
+          <div class="nav-item" data-panel="panel-quiz">🧠 Quiz</div>
+          <div class="nav-section-label">APP</div>
+          <div class="nav-item" data-panel="panel-about">ℹ️ About</div>
+        </nav>
+
+        <!-- Panels -->
+        <div class="settings-panels">
+
+          <div class="panel active" id="panel-wallpaper">
+            <h2 class="panel-title">Wallpaper</h2>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="sr-name">Source</div>
+                <div class="sr-desc">Which images to use as the wallpaper background</div>
+              </div>
+              <select class="select-input" id="sel-source">
+                <option value="default">Default wallpapers</option>
+                <option value="custom">My wallpapers</option>
+              </select>
+            </div>
+
+            <div class="setting-row" id="row-custom-wp">
+              <div class="setting-info">
+                <div class="sr-name">Custom Images</div>
+                <div class="sr-desc"><span id="custom-wp-count">0 images selected</span></div>
+              </div>
+              <button class="btn-secondary" id="btn-manage-wallpapers">Manage…</button>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="sr-name">Word Card Position</div>
+                <div class="sr-desc">Where the word card appears on your wallpaper</div>
+              </div>
+            </div>
+            <div class="position-preview" id="position-preview-s">
+              <div class="pos-marker" id="pos-marker-s" style="left:50%;top:50%"></div>
+              <div class="pos-label">Click to reposition</div>
+            </div>
+
+            <div class="setting-row" style="margin-top:24px">
+              <div class="setting-info">
+                <div class="sr-name">Preview</div>
+                <div class="sr-desc">Apply word overlay and set as wallpaper right now</div>
+              </div>
+              <button class="btn-primary" id="btn-refresh-wallpaper">
+                Refresh Now
+              </button>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-words">
+            <h2 class="panel-title">Words</h2>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="sr-name">Words Per Day</div>
+                <div class="sr-desc">Total unique words shown across all 3 daily updates</div>
+              </div>
+              <select class="select-input" id="sel-words-per-day">
+                <option value="1">1 word</option>
+                <option value="2">2 words</option>
+                <option value="3" selected>3 words</option>
+                <option value="4">4 words</option>
+                <option value="5">5 words</option>
+              </select>
+            </div>
+
+            <div class="setting-row">
+              <div class="setting-info">
+                <div class="sr-name">Current Word</div>
+                <div class="sr-desc">The word currently displayed on your wallpaper</div>
+              </div>
+            </div>
+            <div class="word-card" id="current-word-card">
+              <div class="wc-word" id="wc-word">—</div>
+              <div class="wc-meaning" id="wc-meaning">No word loaded yet</div>
+              <div class="wc-example" id="wc-example"></div>
+              <button class="btn-link" id="btn-learn-more">Learn more ↗</button>
+            </div>
+
+            <div class="setting-row" style="margin-top:8px">
+              <div class="setting-info">
+                <div class="sr-name">Global Shortcut</div>
+                <div class="sr-desc">Opens dictionary page for current word</div>
+              </div>
+              <div class="shortcut-badge">Ctrl + Shift + U</div>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-quiz">
+            <h2 class="panel-title">Quiz</h2>
+
+            <!-- Quiz Home -->
+            <div id="quiz-home">
+              <div class="quiz-tabs">
+                <button class="quiz-tab active" data-range="week">This Week</button>
+                <button class="quiz-tab" data-range="month">This Month</button>
+              </div>
+
+              <div class="quiz-stats">
+                <div class="quiz-stat">
+                  <div class="qs-value" id="quiz-word-count">0</div>
+                  <div class="qs-label">Words Available</div>
+                </div>
+                <div class="quiz-stat">
+                  <div class="qs-value" id="quiz-best-score">—</div>
+                  <div class="qs-label">Best Score</div>
+                </div>
+              </div>
+
+              <p class="quiz-note" id="quiz-note"></p>
+              <button class="btn-primary btn-full" id="btn-start-quiz" disabled>Start Quiz</button>
+            </div>
+
+            <!-- Quiz Active -->
+            <div id="quiz-active" style="display:none">
+              <div class="quiz-progress-row">
+                <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-fill"></div></div>
+                <span class="quiz-progress-text" id="quiz-progress-text">1 / 5</span>
+              </div>
+              <div class="quiz-question-box">
+                <div class="quiz-prompt">What does this word mean?</div>
+                <div class="quiz-word" id="quiz-word-display"></div>
+              </div>
+              <div class="quiz-options" id="quiz-options"></div>
+              <button class="btn-primary" id="btn-next-q" style="display:none;margin-top:16px">Next →</button>
+            </div>
+
+            <!-- Quiz Results -->
+            <div id="quiz-results" style="display:none">
+              <div class="quiz-score-card">
+                <div class="qsc-emoji" id="qsc-emoji">🎉</div>
+                <div class="qsc-fraction" id="qsc-fraction">0 / 0</div>
+                <div class="qsc-percent" id="qsc-percent">0%</div>
+                <div class="qsc-label" id="qsc-label">Keep going!</div>
+              </div>
+              <div class="quiz-result-actions">
+                <button class="btn-secondary" id="btn-quiz-retry">Try Again</button>
+                <button class="btn-primary" id="btn-quiz-done">Done</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="panel-about">
+            <h2 class="panel-title">About</h2>
+            <div class="about-logo">📖</div>
+            <div class="about-name">Wall of Words</div>
+            <div class="about-version">Version 1.0.0</div>
+            <p class="about-desc">Improve your vocabulary passively — new words appear on your desktop wallpaper three times a day.</p>
+            <div class="about-shortcuts">
+              <div class="about-shortcut">
+                <span class="shortcut-badge">Ctrl+Shift+U</span>
+                <span>Open dictionary for current word</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="settings-footer">
+        <button class="btn-secondary" id="btn-cancel">Close</button>
+        <button class="btn-primary" id="btn-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
