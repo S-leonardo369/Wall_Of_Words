@@ -11,6 +11,9 @@ contextBridge.exposeInMainWorld('api', {
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   openWordBrowser: () => ipcRenderer.invoke('open-word-browser'),
   getWordHistory: () => ipcRenderer.invoke('get-word-history'),
+  saveMistake:   (w)  => ipcRenderer.invoke('save-mistake', w),
+  getMistakes:   ()   => ipcRenderer.invoke('get-mistakes'),
+  clearMistakes: ()   => ipcRenderer.invoke('clear-mistakes'),
   saveQuizScore: (data) => ipcRenderer.invoke('save-quiz-score', data),
   getQuizBest: (range) => ipcRenderer.invoke('get-quiz-best', range),
   onNavigate: (cb) => ipcRenderer.on('navigate', (_, page) => cb(page))

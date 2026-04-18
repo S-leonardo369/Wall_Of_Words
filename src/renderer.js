@@ -232,6 +232,21 @@ function buildDistractors(correctWord, allWords, count = 3) {
 
 async function loadQuizHome() {
   quizRange = document.querySelector('.quiz-tab.active')?.dataset.range || 'week';
+
+  document.getElementById('quiz-home').style.display    = '';
+  document.getElementById('quiz-active').style.display  = 'none';
+  document.getElementById('quiz-results').style.display = 'none';
+
+  if (quizRange === 'mistakes') {
+    document.getElementById('quiz-normal-view').style.display   = 'none';
+    document.getElementById('quiz-mistakes-view').style.display = '';
+    await loadMistakesView();
+    return;
+  }
+
+  document.getElementById('quiz-normal-view').style.display   = '';
+  document.getElementById('quiz-mistakes-view').style.display = 'none';
+
   const history = await window.api.getWordHistory();
   const words   = getWordsForRange(history, quizRange);
   const best    = await window.api.getQuizBest(quizRange);
@@ -239,7 +254,7 @@ async function loadQuizHome() {
   document.getElementById('quiz-word-count').textContent = words.length;
   document.getElementById('quiz-best-score').textContent = best !== null ? `${best}%` : '—';
 
-  const noteEl = document.getElementById('quiz-note');
+  const noteEl   = document.getElementById('quiz-note');
   const startBtn = document.getElementById('btn-start-quiz');
 
   if (words.length < 4) {
@@ -249,11 +264,72 @@ async function loadQuizHome() {
     noteEl.textContent = `${words.length} words ready — good luck!`;
     startBtn.disabled = false;
   }
+}
 
-  // Show home, hide others
-  document.getElementById('quiz-home').style.display    = '';
-  document.getElementById('quiz-active').style.display  = 'none';
+function esc(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function loadMistakesView() {
+  const mistakes = await window.api.getMistakes();
+
+  const countEl  = document.getElementById('mistakes-count-label');
+  const listEl   = document.getElementById('mistakes-list');
+  const quizBtn  = document.getElementById('btn-quiz-mistakes');
+  const clearBtn = document.getElementById('btn-clear-mistakes');
+
+  countEl.textContent = mistakes.length === 0
+    ? 'No mistakes recorded yet'
+    : `${mistakes.length} word${mistakes.length !== 1 ? 's' : ''} to review`;
+
+  clearBtn.style.display = mistakes.length > 0 ? '' : 'none';
+  quizBtn.disabled = mistakes.length < 4;
+
+  if (mistakes.length === 0) {
+    listEl.innerHTML = '<div class="mistakes-empty">Take a quiz and any words you miss will appear here for review.</div>';
+    return;
+  }
+
+  // Sort: most missed first, then most recently missed
+  const sorted = [...mistakes].sort((a, b) =>
+    b.missedCount - a.missedCount || (b.lastMissed || 0) - (a.lastMissed || 0)
+  );
+
+  listEl.innerHTML = sorted.map(m => `
+    <div class="mistake-item">
+      <div class="mistake-item-header">
+        <span class="mistake-word">${esc(m.word)}</span>
+        <span class="mistake-badge">${m.missedCount === 1 ? 'Missed once' : `Missed ${m.missedCount}×`}</span>
+      </div>
+      <div class="mistake-meaning">${esc(m.meaning)}</div>
+      ${m.example ? `<div class="mistake-example">"${esc(m.example)}"</div>` : ''}
+    </div>
+  `).join('');
+}
+
+async function startMistakesQuiz() {
+  const mistakes = await window.api.getMistakes();
+  if (mistakes.length < 4) {
+    showToast('Need at least 4 mistake words to quiz.', 'error');
+    return;
+  }
+
+  quizRange = 'mistakes';
+  quizWords = shuffle(mistakes).slice(0, Math.min(mistakes.length, 10));
+  quizIndex = 0;
+  quizScore = 0;
+
+  // Use all mistakes + fallback pool as distractor source
+  window._quizHistory = [
+    ...mistakes,
+    ...FALLBACK_POOL.filter(f => !mistakes.some(m => m.word === f.word))
+  ];
+
+  document.getElementById('quiz-home').style.display    = 'none';
+  document.getElementById('quiz-active').style.display  = '';
   document.getElementById('quiz-results').style.display = 'none';
+
+  renderQuestion(window._quizHistory);
 }
 
 function startQuiz(history) {
@@ -309,13 +385,14 @@ function handleAnswer(btn, isCorrect, container) {
     quizScore++;
   } else {
     btn.classList.add('wrong');
-    // Highlight the correct one
+    // Highlight the correct answer
     container.querySelectorAll('.quiz-option').forEach(b => {
       if (b !== btn) b.classList.add('correct');
     });
+    // Record the missed word (fire-and-forget)
+    window.api.saveMistake(quizWords[quizIndex]);
   }
 
-  // Disable all options
   container.querySelectorAll('.quiz-option').forEach(b => { b.disabled = true; });
   document.getElementById('btn-next-q').style.display = '';
 }
@@ -340,9 +417,12 @@ async function showResults() {
   document.getElementById('qsc-emoji').textContent = emoji;
   document.getElementById('qsc-label').textContent  = label;
 
-  await window.api.saveQuizScore({ range: quizRange, score: quizScore, total });
-  const newBest = await window.api.getQuizBest(quizRange);
-  document.getElementById('quiz-best-score').textContent = `${newBest}%`;
+  // Don't update weekly/monthly best score when quizzing mistakes
+  if (quizRange !== 'mistakes') {
+    await window.api.saveQuizScore({ range: quizRange, score: quizScore, total });
+    const newBest = await window.api.getQuizBest(quizRange);
+    document.getElementById('quiz-best-score').textContent = `${newBest}%`;
+  }
 }
 
 function initQuiz() {
@@ -356,12 +436,23 @@ function initQuiz() {
     });
   });
 
-  // Start quiz
+  // Start normal quiz (week / month)
   document.getElementById('btn-start-quiz')?.addEventListener('click', async () => {
     const history = await window.api.getWordHistory();
     startQuiz(history);
-    // Store allHistory on window for use in next-question handler
     window._quizHistory = history;
+  });
+
+  // Start mistakes quiz
+  document.getElementById('btn-quiz-mistakes')?.addEventListener('click', () => {
+    startMistakesQuiz();
+  });
+
+  // Clear all mistakes
+  document.getElementById('btn-clear-mistakes')?.addEventListener('click', async () => {
+    await window.api.clearMistakes();
+    showToast('Mistake list cleared', 'success');
+    await loadMistakesView();
   });
 
   // Next question
@@ -374,15 +465,23 @@ function initQuiz() {
     }
   });
 
-  // Retry
+  // Retry — respects current mode
   document.getElementById('btn-quiz-retry')?.addEventListener('click', async () => {
-    const history = await window.api.getWordHistory();
-    startQuiz(history);
-    window._quizHistory = history;
+    if (quizRange === 'mistakes') {
+      await startMistakesQuiz();
+    } else {
+      const history = await window.api.getWordHistory();
+      startQuiz(history);
+      window._quizHistory = history;
+    }
   });
 
-  // Done
+  // Done — return to the tab that was active
   document.getElementById('btn-quiz-done')?.addEventListener('click', () => {
+    // Make sure the correct tab shows as active
+    document.querySelectorAll('.quiz-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.range === quizRange);
+    });
     loadQuizHome();
   });
 }

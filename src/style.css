@@ -305,6 +305,64 @@ html, body {
 
 .quiz-result-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
+/* ── Mistakes ── */
+.mistakes-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.mistakes-count {
+  font-size: 13px; font-weight: 600; color: var(--text-muted);
+}
+
+.btn-sm-danger {
+  background: transparent; border: 1px solid var(--danger);
+  color: var(--danger); border-radius: var(--radius-sm);
+  padding: 5px 12px; font-size: 12px; cursor: pointer;
+  transition: background .15s;
+}
+.btn-sm-danger:hover { background: rgba(248,113,113,.12); }
+
+.mistakes-list {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 280px; overflow-y: auto;
+  padding-right: 4px;
+}
+
+.mistake-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  border-left: 3px solid var(--danger);
+  transition: border-color .15s;
+}
+.mistake-item:hover { border-left-color: var(--accent); }
+
+.mistake-item-header {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 10px;
+  margin-bottom: 6px;
+}
+.mistake-word {
+  font-size: 16px; font-weight: 700; color: var(--accent);
+}
+.mistake-badge {
+  font-size: 11px; font-weight: 600;
+  background: rgba(248,113,113,.15); color: var(--danger);
+  border: 1px solid rgba(248,113,113,.3);
+  border-radius: 20px; padding: 2px 10px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.mistake-meaning {
+  font-size: 12px; line-height: 1.6; color: var(--text-muted);
+}
+.mistake-example {
+  font-size: 11px; font-style: italic; color: var(--text-dim);
+  margin-top: 4px; line-height: 1.5;
+}
+.mistakes-empty {
+  text-align: center; color: var(--text-dim);
+  font-size: 13px; padding: 32px 16px;
+}
+
 /* Shortcut badge */
 .shortcut-badge {
   background: var(--surface2); border: 1px solid var(--border);

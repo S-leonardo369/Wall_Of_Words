@@ -23,7 +23,8 @@ async function loadModules() {
       currentWord: null,
       wordHistory: [],
       textPosition: { x: 50, y: 50 },
-      setupComplete: false
+      setupComplete: false,
+      quizMistakes: []
     }
   });
 
@@ -206,6 +207,26 @@ function setupIPC() {
   });
 
   ipcMain.handle('get-word-history', () => store.get('wordHistory', []));
+
+  ipcMain.handle('save-mistake', (event, wordData) => {
+    const mistakes = store.get('quizMistakes', []);
+    const idx = mistakes.findIndex(m => m.word === wordData.word);
+    if (idx >= 0) {
+      mistakes[idx].missedCount = (mistakes[idx].missedCount || 1) + 1;
+      mistakes[idx].lastMissed  = Date.now();
+    } else {
+      mistakes.push({ ...wordData, missedCount: 1, lastMissed: Date.now() });
+    }
+    store.set('quizMistakes', mistakes);
+    return true;
+  });
+
+  ipcMain.handle('get-mistakes', () => store.get('quizMistakes', []));
+
+  ipcMain.handle('clear-mistakes', () => {
+    store.set('quizMistakes', []);
+    return true;
+  });
 
   ipcMain.handle('save-quiz-score', (event, { range, score, total }) => {
     const key = `quizBest_${range}`;

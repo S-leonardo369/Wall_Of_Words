@@ -211,21 +211,36 @@
               <div class="quiz-tabs">
                 <button class="quiz-tab active" data-range="week">This Week</button>
                 <button class="quiz-tab" data-range="month">This Month</button>
+                <button class="quiz-tab" data-range="mistakes">📝 Mistakes</button>
               </div>
 
-              <div class="quiz-stats">
-                <div class="quiz-stat">
-                  <div class="qs-value" id="quiz-word-count">0</div>
-                  <div class="qs-label">Words Available</div>
+              <!-- Normal quiz view (week / month) -->
+              <div id="quiz-normal-view">
+                <div class="quiz-stats">
+                  <div class="quiz-stat">
+                    <div class="qs-value" id="quiz-word-count">0</div>
+                    <div class="qs-label">Words Available</div>
+                  </div>
+                  <div class="quiz-stat">
+                    <div class="qs-value" id="quiz-best-score">—</div>
+                    <div class="qs-label">Best Score</div>
+                  </div>
                 </div>
-                <div class="quiz-stat">
-                  <div class="qs-value" id="quiz-best-score">—</div>
-                  <div class="qs-label">Best Score</div>
-                </div>
+                <p class="quiz-note" id="quiz-note"></p>
+                <button class="btn-primary btn-full" id="btn-start-quiz" disabled>Start Quiz</button>
               </div>
 
-              <p class="quiz-note" id="quiz-note"></p>
-              <button class="btn-primary btn-full" id="btn-start-quiz" disabled>Start Quiz</button>
+              <!-- Mistakes review view -->
+              <div id="quiz-mistakes-view" style="display:none">
+                <div class="mistakes-header">
+                  <span class="mistakes-count" id="mistakes-count-label">0 words to review</span>
+                  <button class="btn-sm-danger" id="btn-clear-mistakes" style="display:none">Clear All</button>
+                </div>
+                <div class="mistakes-list" id="mistakes-list"></div>
+                <button class="btn-primary btn-full" id="btn-quiz-mistakes" style="margin-top:14px" disabled>
+                  Quiz My Mistakes
+                </button>
+              </div>
             </div>
 
             <!-- Quiz Active -->
